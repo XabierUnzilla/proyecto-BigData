@@ -8,3 +8,5 @@ resultados/
 spark-warehouse/
 metastore_db/
 derby.log
+
+data/taxi_zone_lookup.csv
