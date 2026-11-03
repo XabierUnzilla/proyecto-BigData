@@ -1,0 +1,9 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "python.analysis.extraPaths": ["${workspaceFolder}/scripts"],
+  "terminal.integrated.env.osx": {
+    "JAVA_HOME": "/Users/ainhoa/.jdks/jdk-17.0.21+9/Contents/Home",
+    "PATH": "/Users/ainhoa/.jdks/jdk-17.0.21+9/Contents/Home/bin:${env:PATH}"
+  }
+}

@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.DS_Store
+# Los datos no se suben al repositorio (cada uno los descarga; en el clúster van a HDFS)
+data/**/*.parquet
+data/meteo/*
+resultados/
+spark-warehouse/
+metastore_db/
+derby.log

@@ -1,0 +1,242 @@
+<title>Calendario ATBD Taxis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: cabecera tipo taxímetro con franja de cuadros, fichas de equipo, rejilla semanal lun–dom que pasa a lista en móvil */
+:root{
+  --bg:#f6f5f1; --surface:#ffffff; --ink:#1d1c19; --muted:#6b6860; --line:#dedbd2;
+  --taxi:#f5b800; --taxi-ink:#1d1c19; --past:#eceae4;
+  --ane:#c2410c; --keltse:#0f766e; --xabi:#1d4ed8; --ainhoa:#9333ea; --todos:#3f3d38;
+  --ane-bg:#fbe7dc; --keltse-bg:#d8f0ec; --xabi-bg:#dfe7fb; --ainhoa-bg:#efe0fb; --todos-bg:#e9e7e1;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141412; --surface:#1d1c1a; --ink:#eeece6; --muted:#a29e94; --line:#34322e;
+  --taxi:#f5b800; --taxi-ink:#141412; --past:#191917;
+  --ane:#fb923c; --keltse:#2dd4bf; --xabi:#7aa2ff; --ainhoa:#c48bfa; --todos:#cfccc4;
+  --ane-bg:#3a2216; --keltse-bg:#12312d; --xabi-bg:#1a2442; --ainhoa-bg:#2c1c3e; --todos-bg:#2a2926;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141412; --surface:#1d1c1a; --ink:#eeece6; --muted:#a29e94; --line:#34322e;
+  --taxi:#f5b800; --taxi-ink:#141412; --past:#191917;
+  --ane:#fb923c; --keltse:#2dd4bf; --xabi:#7aa2ff; --ainhoa:#c48bfa; --todos:#cfccc4;
+  --ane-bg:#3a2216; --keltse-bg:#12312d; --xabi-bg:#1a2442; --ainhoa-bg:#2c1c3e; --todos-bg:#2a2926;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45}
+.wrap{max-width:1280px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+.checker{height:14px;background:repeating-conic-gradient(var(--ink) 0 25%,var(--taxi) 0 50%) 0 0/14px 14px;border-radius:2px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(34px,6vw,56px);line-height:.95;margin:0;letter-spacing:.01em;text-wrap:balance}
+.sub{color:var(--muted);margin:8px 0 0;max-width:62ch}
+.meter{background:var(--ink);color:var(--taxi);font-family:var(--mono);padding:10px 14px;border-radius:6px;display:flex;flex-direction:column;align-items:flex-end;font-variant-numeric:tabular-nums}
+.meter b{font-size:30px;line-height:1}
+.meter span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--bg);opacity:.75}
+h2{font-family:var(--display);font-weight:700;font-size:26px;margin:0;letter-spacing:.02em;text-transform:uppercase}
+.team{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:980px){.team{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.team{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;border-top:4px solid var(--c)}
+.card .name{font-family:var(--display);font-size:24px;font-weight:700;color:var(--c);line-height:1}
+.card .bg{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.card .role{font-weight:600}
+.card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:2px}
+.qs{display:flex;gap:6px;flex-wrap:wrap}
+.q{font-family:var(--mono);font-size:12px;padding:2px 7px;border-radius:4px;background:var(--cb);color:var(--c)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filters .lbl{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-right:4px}
+.chip{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.chip i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible{outline:2px solid var(--taxi);outline-offset:2px}
+.week{display:flex;flex-direction:column;gap:10px}
+.weekhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.weekhead p{margin:0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.dow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 4px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:6px;min-height:120px;min-width:0}
+.day.past{background:var(--past)}
+.day.past .task{opacity:.55}
+.day.today{outline:2px solid var(--taxi);outline-offset:-1px}
+.day.deadline{border:2px solid var(--ink)}
+.day.off{background:transparent;border-style:dashed}
+.dnum{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.dnum b{font-family:var(--display);font-size:22px;line-height:1}
+.dnum .dname{display:none;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.tag{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border-radius:3px;background:var(--taxi);color:var(--taxi-ink);white-space:nowrap}
+.tag.now{background:var(--ink);color:var(--bg)}
+.task{background:var(--cb);border-left:3px solid var(--c);border-radius:3px;padding:5px 7px;font-size:12.5px;line-height:1.35;overflow-wrap:anywhere}
+.task .who{display:block;font-weight:600;color:var(--c);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.task.ms{background:var(--taxi);color:var(--taxi-ink);border-left-color:var(--taxi-ink)}
+.task.ms .who{color:var(--taxi-ink)}
+.empty{color:var(--muted);font-size:12px;font-style:italic}
+@media (max-width:860px){
+  .grid{grid-template-columns:1fr}
+  .dow{display:none}
+  .day{min-height:0}
+  .day.hide-m{display:none}
+  .dnum .dname{display:inline}
+}
+.p-ane{--c:var(--ane);--cb:var(--ane-bg)} .p-keltse{--c:var(--keltse);--cb:var(--keltse-bg)}
+.p-xabi{--c:var(--xabi);--cb:var(--xabi-bg)} .p-ainhoa{--c:var(--ainhoa);--cb:var(--ainhoa-bg)}
+.p-todos{--c:var(--todos);--cb:var(--todos-bg)}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.note{border:1px solid var(--line);border-radius:8px;padding:14px 16px;background:var(--surface)}
+.note h3{margin:0 0 6px;font-size:14px}
+.note p,.note ul{margin:0;color:var(--muted)}
+.note ul{padding-left:18px}
+code{font-family:var(--mono);font-size:12px}
+@media (prefers-reduced-motion:no-preference){.task{transition:opacity .15s}}
+</style>
+
+<div class="wrap">
+  <div class="checker" aria-hidden="true"></div>
+  <header>
+    <div>
+      <h1>Trabajo ATBD · Yellow Taxi 2025</h1>
+      <p class="sub">Calendario del 3 al 20 de noviembre siguiendo las 8 etapas de la guía: 12 Parquet de Yellow Taxi 2025, la tabla de zonas y meteorología de NOAA; 10 analíticas con Spark DataFrame en un clúster Hadoop en AWS. La visualización (etapa 7) se queda solo en interpretación, porque el profesor la ha quitado.</p>
+    </div>
+    <div class="meter" id="meter"><b id="days">—</b><span>días para la entrega</span></div>
+  </header>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2>Equipo</h2>
+    <div class="team">
+      <div class="card p-ane">
+        <div class="name">Ane</div><div class="bg">Analítica de negocios</div>
+        <div class="role">D · Resultados y memoria</div>
+        <ul><li>Fichas de las 10 preguntas (etapa 3)</li><li>Correo al profesor: grupo de 4</li><li>Interpretación de resultados y documento final</li></ul>
+        <div class="qs"><span class="q">Q01 meses</span><span class="q">Q02 día semana</span><span class="q">Q07 importe distrito</span></div>
+      </div>
+      <div class="card p-keltse">
+        <div class="name">Keltse</div><div class="bg">Ingeniería biomédica</div>
+        <div class="role">A · Gestión de datos</div>
+        <ul><li>Descarga y comprensión de viajes y zonas (etapa 1)</li><li>Meteorología NOAA (etapa 2)</li><li>Criterios de calidad y limpieza</li></ul>
+        <div class="qs"><span class="q">Q08 duración</span><span class="q">Q09 importe/distancia</span><span class="q">Q10 lluvia</span></div>
+      </div>
+      <div class="card p-xabi">
+        <div class="name">Xabi</div><div class="bg">Ingeniería informática</div>
+        <div class="role">B · Infraestructura</div>
+        <ul><li>Clúster en AWS: master, 3 workers, client (etapa 5)</li><li>HDFS, YARN, Spark y tolerancia a fallos</li><li>Datos en HDFS y ejecución final (etapa 6)</li></ul>
+        <div class="qs"><span class="q">Q03 horas</span><span class="q">Q04 distritos</span></div>
+      </div>
+      <div class="card p-ainhoa">
+        <div class="name">Ainhoa</div><div class="bg">Ingeniería informática</div>
+        <div class="role">C · Analíticas Spark</div>
+        <ul><li>Repositorio y entorno PySpark (etapa 4)</li><li><code>cargar_datos.py</code>, <code>preparar_datos.py</code>, <code>main.py</code></li><li>Joins con zonas y revisión de las 10 consultas</li></ul>
+        <div class="qs"><span class="q">Q05 zonas origen</span><span class="q">Q06 rutas</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px">
+      <h2>Calendario</h2>
+      <div class="filters" role="group" aria-label="Filtrar por persona">
+        <span class="lbl">Ver tareas de</span>
+        <button class="chip" id="f-all" data-p="all" aria-pressed="true">Todo el equipo</button>
+        <button class="chip p-ane" id="f-ane" data-p="ane" aria-pressed="false"><i></i>Ane</button>
+        <button class="chip p-keltse" id="f-keltse" data-p="keltse" aria-pressed="false"><i></i>Keltse</button>
+        <button class="chip p-xabi" id="f-xabi" data-p="xabi" aria-pressed="false"><i></i>Xabi</button>
+        <button class="chip p-ainhoa" id="f-ainhoa" data-p="ainhoa" aria-pressed="false"><i></i>Ainhoa</button>
+      </div>
+    </div>
+    <div id="cal" style="display:flex;flex-direction:column;gap:28px"></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2>Normas del equipo</h2>
+    <div class="notes">
+      <div class="note"><h3>Todos programan</h3><p>La nota de la presentación es individual: cada persona debe saber lanzar un <code>spark-submit</code>, moverse por HDFS y explicar cualquier consulta, no solo las suyas.</p></div>
+      <div class="note"><h3>Parejas</h3><p>Ainhoa acompaña a Keltse y Xabi a Ane en el paso de local al clúster. Ane y Keltse aportan el criterio de negocio y estadístico de las consultas de Xabi y Ainhoa.</p></div>
+      <div class="note"><h3>Criterio de avance</h3><p>Nadie programa consultas hasta que enero de 2025 esté entendido y el cruce <code>PULocationID</code> ↔ <code>LocationID</code> funcione (etapa 1 cerrada el domingo 8).</p></div>
+      <div class="note"><h3>Plan B para Q10</h3><p>Si el lunes 9 la meteorología de NOAA no está validada (365 días, unidades, ausencias), Q10 se sustituye por otra consulta solo con taxis y se documenta la incidencia.</p></div>
+      <div class="note"><h3>AWS Academy</h3><ul><li>Parad las instancias, no las terminéis: si se terminan, se pierde HDFS.</li><li>Las IPs cambian al reiniciar el laboratorio: usad el script de <code>/etc/hosts</code>.</li><li>Las sesiones duran unas 4 horas.</li></ul></div>
+      <div class="note"><h3>Repositorio</h3><ul><li><code>scripts/</code>: <code>cargar_datos.py</code>, <code>preparar_datos.py</code>, <code>consultas.py</code> y <code>main.py</code>, como en la guía.</li><li>Resultados en <code>hdfs:///resultados/q01/</code> … <code>q10/</code>.</li><li>Sin carpeta <code>graficos/</code>: no hay visualización.</li></ul></div>
+      <div class="note"><h3>Decisiones abiertas</h3><ul><li>Confirmar con el profesor que el grupo puede ser de 4.</li><li>Comprobar qué meses de 2025 están publicados.</li><li>Cerrar las 10 preguntas y sus filtros.</li></ul></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const T = (p, t, ms) => ({p, t, ms: !!ms});
+// Tareas por fecha (noviembre 2026). p: persona o "todos"
+const TASKS = {
+  3:[T("todos","Reunión de arranque: leer juntos la guía y aceptar el reparto"),T("ane","Escribir al profesor para confirmar que el grupo puede ser de 4",1),T("keltse","E1 · Descargar yellow_tripdata_2025-01.parquet y taxi_zone_lookup.csv; leer el diccionario oficial")],
+  4:[T("keltse","E1 · Abrir enero con Spark: esquema, 5 filas, recuento de registros y nulos"),T("ainhoa","E4 · Repositorio git privado con la estructura de la guía; PySpark en local para todos"),T("xabi","E5 · Lanzar 5 instancias EC2 (t3.large), grupo de seguridad y SSH sin contraseña"),T("ane","E3 · Borrador de las fichas de las 10 preguntas: objetivo y utilidad")],
+  5:[T("keltse","E1 · Comprobar que LocationID es único y que PULocationID/DOLocationID cruzan con el CSV"),T("ainhoa","E4 · cargar_datos.py: lectura de Parquet y CSV con Spark DataFrame"),T("xabi","E5 · Instalar Java y Hadoop; HDFS con replicación 3"),T("ane","E3 · Fichas: columnas, tablas, filtros y operaciones Spark de cada pregunta (con Ainhoa)")],
+  6:[T("keltse","E1 · Descargar los otros 11 Parquet y verificar que el esquema es compatible entre meses"),T("ainhoa","E4 · preparar_datos.py: join de zonas como origen y como destino"),T("xabi","E5 · YARN y Spark funcionando; prueba con SparkPi desde el nodo client"),T("ane","Redactar la descripción del dataset, la motivación y las fuentes")],
+  7:[T("keltse","E2 · NOAA: elegir estación (p. ej. Central Park), descargar 2025 y revisar unidades"),T("keltse","Documentar los criterios de limpieza: fechas, duraciones, distancias, importes, IDs sin zona")],
+  8:[T("todos","Revisión (1 h): cerrar las 10 preguntas y los criterios de limpieza"),T("todos","Etapas 1 y 3 cerradas",1),T("xabi","E5 · Prueba de tolerancia a fallos: parar un worker y comprobar HDFS y los trabajos")],
+  9:[T("xabi","Sesión de 1 h para todos: arrancar el clúster, hdfs dfs y spark-submit"),T("keltse","E2 · Tabla diaria de meteorología: fecha, precipitación y temperatura; 365 días y ausencias"),T("todos","Decidir: la meteorología vale para Q10 o se aplica el plan B",1),T("ainhoa","E4 · preparar_datos.py aplica la limpieza de Keltse")],
+  10:[T("xabi","E6 · Subir los 12 Parquet y el CSV a HDFS y comprobar la replicación"),T("ane","Q01 · viajes por mes y Q02 · viajes por día de la semana (en local)"),T("keltse","Q09 · importe medio por tramos de distancia (en local)"),T("ainhoa","Q05 · zonas de origen más frecuentes")],
+  11:[T("xabi","Q03 · viajes por hora de inicio"),T("ane","Q07 · importe medio por distrito de origen"),T("keltse","Q08 · duración media por franja horaria, solo con viajes coherentes"),T("ainhoa","Q06 · rutas origen–destino más habituales")],
+  12:[T("keltse","Q10 · agregar viajes por fecha y unir con meteorología: lluviosos frente a secos"),T("xabi","Q04 · viajes iniciados por distrito"),T("ainhoa","E6 · main.py: rutas a HDFS, ejecuta las 10 consultas y guarda cada resultado"),T("todos","Parejas (1 h): Ainhoa con Keltse, Xabi con Ane")],
+  13:[T("ane","Lanzar Q01, Q02 y Q07 en el clúster con spark-submit (con Xabi)"),T("keltse","Lanzar Q08, Q09 y Q10 en el clúster con spark-submit (con Ainhoa)"),T("xabi","Tema 6 (bonus): automatizar el despliegue del clúster, p. ej. con Ansible"),T("todos","Etapa 4 cerrada: 10 consultas probadas",1)],
+  14:[T("todos","Revisión de código cruzada: cada persona revisa las consultas de otra")],
+  15:[T("todos","Margen para lo que se haya retrasado")],
+  16:[T("xabi","E6 · Ejecución final de main.py en el clúster; resultados en hdfs:///resultados/q01–q10"),T("xabi","Capturas de las interfaces web de YARN y HDFS y del log de ejecución"),T("ainhoa","Comprobar que los 10 resultados están en HDFS y son reproducibles")],
+  17:[T("ane","E7 · Plantilla del documento de resultados; cada persona interpreta sus consultas (código, resultado, límites)"),T("keltse","Revisar límites y anomalías: lluvia y viajes no implica causalidad"),T("xabi","E8 · Punto 1: nodos del clúster y función de cada uno"),T("ainhoa","E8 · Punto 2: herramientas del Tema 6, junto con Xabi")],
+  18:[T("ane","Unificar el documento: estilo, orden y conclusiones"),T("ainhoa","README con cómo ejecutar todo y el .zip o enlace del repositorio"),T("keltse","Repasar el apartado de datos, la limpieza y las fuentes")],
+  19:[T("todos","Ensayo cruzado: cada persona explica la consulta de otra y lanza un trabajo desde cero"),T("todos","Cierre interno: documento y repositorio congelados a las 22:00",1)],
+  20:[T("ane","Subir el documento de resultados a ALUD",1),T("ainhoa","Subir el enlace al repositorio o el .zip a ALUD",1)]
+};
+const WEEKS = [
+  {n:"Semana 1", d:"Etapas 1, 2, 3 y 5: entender los datos, definir las preguntas y montar el clúster", start:2},
+  {n:"Semana 2", d:"Etapas 2, 4 y 6: meteorología, desarrollo de las 10 consultas y datos en HDFS", start:9},
+  {n:"Semana 3", d:"Etapas 6, 7 y 8: ejecución final, interpretación, documento y ensayo", start:16}
+];
+const DOW = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+const DOWL = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+const NAMES = {ane:"Ane",keltse:"Keltse",xabi:"Xabi",ainhoa:"Ainhoa",todos:"Todos"};
+const DEADLINE = new Date(2026,10,20);
+const now = new Date(); const today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+
+let filter = "all";
+try { filter = localStorage.getItem("atbd-filter") || "all"; } catch(e){}
+
+function render(){
+  const cal = document.getElementById("cal"); cal.innerHTML = "";
+  for (const w of WEEKS){
+    const sec = document.createElement("div"); sec.className = "week";
+    sec.innerHTML = `<div class="weekhead"><h2>${w.n}</h2><p>${w.start}–${w.start+6} nov · ${w.d}</p></div>`;
+    const g = document.createElement("div"); g.className = "grid";
+    DOW.forEach(d => { const h = document.createElement("div"); h.className = "dow"; h.textContent = d; g.appendChild(h); });
+    for (let i=0;i<7;i++){
+      const dn = w.start+i, date = new Date(2026,10,dn);
+      const all = TASKS[dn] || [];
+      const list = all.filter(t => filter==="all" || t.p===filter || t.p==="todos");
+      const el = document.createElement("div");
+      const off = dn<3 || dn>20;
+      el.className = "day" + (date<today ? " past" : "") + (+date===+today ? " today" : "") + (dn===20 ? " deadline" : "") + (off ? " off" : "");
+      if (off || list.length===0) el.classList.add("hide-m");
+      let tag = "";
+      if (+date===+today) tag = `<span class="tag now">Hoy</span>`;
+      else if (dn===20) tag = `<span class="tag">Entrega</span>`;
+      else if (dn===8) tag = `<span class="tag">Hito</span>`;
+      el.innerHTML = `<div class="dnum"><span><b>${dn}</b> <span class="dname">${DOWL[i]}</span></span>${tag}</div>`;
+      if (off) { el.insertAdjacentHTML("beforeend", `<span class="empty">${dn<3?"Antes del inicio":"Después de la entrega"}</span>`); }
+      else if (!list.length) { el.insertAdjacentHTML("beforeend", `<span class="empty">Sin tareas</span>`); }
+      for (const t of list){
+        const d = document.createElement("div");
+        d.className = `task p-${t.p}` + (t.ms ? " ms" : "");
+        d.innerHTML = `<span class="who">${NAMES[t.p]}</span>`;
+        d.appendChild(document.createTextNode(t.t));
+        el.appendChild(d);
+      }
+      g.appendChild(el);
+    }
+    sec.appendChild(g); cal.appendChild(sec);
+  }
+  document.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.p===filter ? "true" : "false"));
+}
+document.querySelectorAll(".chip").forEach(c => c.addEventListener("click", () => {
+  filter = c.dataset.p; try { localStorage.setItem("atbd-filter", filter); } catch(e){}
+  render();
+}));
+const left = Math.round((DEADLINE - today)/86400000);
+document.getElementById("days").textContent = left > 0 ? left : (left===0 ? "Hoy" : "—");
+render();
+</script>
