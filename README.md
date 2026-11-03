@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ATBD · Yellow Taxi 2025
 
 Trabajo en grupo de ATBD: 10 analíticas con Spark DataFrame sobre los viajes de Yellow Taxi de Nueva York de 2025, ejecutadas en un clúster Hadoop (HDFS + YARN) en AWS Academy.
@@ -74,3 +75,6 @@ hdfs dfs -ls /resultados
 - NYC TLC Trip Record Data: https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page
 - Taxi Zone Lookup Table: https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv
 - Meteorología (pendiente): https://www.ncei.noaa.gov/cdo-web/
+=======
+# proyecto-BigData
+>>>>>>> 414b256327a15524654d24a2e0d8f46c4de0dbe8
