@@ -1,0 +1,19 @@
+# Datos (Parquet, CSV de NOAA, etc.): no se suben a git
+data/*
+!data/.gitkeep
+
+# Entorno virtual y cachés de Python
+.venv/
+__pycache__/
+*.pyc
+
+# Salidas locales de Spark
+spark-warehouse/
+metastore_db/
+derby.log
+resultados/
+
+# Editor / sistema
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,146 @@
+# Notas de Keltse · Proyecto ATBD Taxis NYC 2025
+
+Rol: **A · Gestión de datos** (descarga, calidad, limpieza y meteorología) + consultas **Q08, Q09 y Q10**.
+Pareja para pasar del local al clúster: **Ainhoa**.
+
+---
+
+## Calendario de mis tareas
+
+| Día | Etapa | Tarea | Hecho |
+|---|---|---|---|
+| Lun 3 | E1 | Descargar `yellow_tripdata_2025-01.parquet` y `taxi_zone_lookup.csv`; leer el diccionario oficial | ☐ |
+| Mar 4 | E1 | Abrir enero con Spark: esquema, 5 filas, recuento y nulos (`explorar_enero.py`) | ☐ |
+| Mié 5 | E1 | Comprobar que `LocationID` es único y que `PULocationID`/`DOLocationID` cruzan con el CSV | ☐ |
+| Jue 6 | E1 | Descargar los otros 11 Parquet y comparar esquemas (`comparar_esquemas()`) | ☐ |
+| Vie 7 | E2 | NOAA: elegir estación (Central Park), pedir datos de 2025 y revisar unidades | ☐ |
+| Vie 7 | — | Documentar criterios de limpieza (plantilla abajo) | ☐ |
+| Sáb 8 | Hito | Revisión en grupo: cerrar las 10 preguntas y los criterios de limpieza | ☐ |
+| Dom 9 | E2 | Tabla diaria de meteorología: fecha, precipitación, temperatura; 365 días y ausencias | ☐ |
+| Dom 9 | — | Decidir con el grupo: meteo válida para Q10 o plan B | ☐ |
+| Lun 10 | — | **Q09** · importe medio por tramos de distancia (local) | ☐ |
+| Mar 11 | — | **Q08** · duración media por franja horaria, solo viajes coherentes | ☐ |
+| Mié 12 | — | **Q10** · viajes diarios + meteorología: lluviosos frente a secos | ☐ |
+| Mié 12 | — | Sesión en pareja con Ainhoa (1 h) | ☐ |
+| Jue 13 | E6 | Lanzar Q08, Q09 y Q10 en el clúster con `spark-submit` (con Ainhoa) | ☐ |
+| Vie 14 | — | Revisión de código cruzada | ☐ |
+| Mar 17 | E7 | Revisar límites y anomalías (lluvia y viajes ≠ causalidad) | ☐ |
+| Mié 18 | E8 | Repasar el apartado de datos, limpieza y fuentes del documento | ☐ |
+| Jue 19 | — | Ensayo cruzado: explicar la consulta de otra persona y lanzar un trabajo desde cero | ☐ |
+
+> **Criterio de avance del equipo:** nadie programa consultas hasta que enero esté entendido y el cruce `PULocationID ↔ LocationID` funcione (etapa 1 cerrada el día 8). Esto depende de mí.
+
+---
+
+## Entorno en VS Code
+
+```bash
+python -m venv .venv
+# Windows:   .venv\Scripts\activate
+# Mac/Linux: source .venv/bin/activate
+pip install pyspark
+java -version      # debe ser 17; si no, instalar JDK 17 y configurar JAVA_HOME
+python scripts/explorar_enero.py
+```
+
+- Los datos van en `data/` (no subir los Parquet a git: añadir `data/` al `.gitignore`).
+- En `explorar_enero.py`, cambiar las rutas a `data/yellow_tripdata_2025-01.parquet` y `data/taxi_zone_lookup.csv`.
+
+---
+
+## Fuentes
+
+- Datos de taxi: https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page
+- Diccionario Yellow Taxi: https://www.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_yellow.pdf
+- Tabla de zonas: https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv
+- Meteorología NOAA (Climate Data Online): https://www.ncei.noaa.gov/cdo-web/
+
+---
+
+## Etapa 1 · Qué mirar en el diccionario
+
+- `payment_type`, `RatecodeID`, `VendorID`: son códigos numéricos; anotar qué significa cada valor.
+- Cargos: `congestion_surcharge`, `Airport_fee` y **`cbd_congestion_fee`** (nueva en 2025: cargo de la zona de congestión de la MTA desde el 5 de enero de 2025). Puede servir para proponer preguntas menos típicas.
+- Fechas: `tpep_pickup_datetime` y `tpep_dropoff_datetime`.
+- `trip_distance` está en **millas**.
+
+## Avisos para la exploración
+
+- En la tabla de zonas, los **IDs 264 y 265** son "Unknown" / "Outside of NYC" → decidir si se excluyen en las consultas por zona o distrito.
+- El archivo de enero puede traer viajes con fechas de otros meses o años raros → filtrar por fecha de inicio.
+- Algún mes puede tener columnas con **distinto tipo** (p. ej. `passenger_count` entero vs. decimal) o nombres distintos (`Airport_fee` / `airport_fee`). Si pasa, leer los 12 Parquet de golpe falla → comparar uno a uno con `comparar_esquemas()` y documentarlo para Ainhoa.
+- Comprobar que `LocationID` no tiene duplicados; si los tuviera, el join multiplicaría filas.
+
+---
+
+## Plantilla · Criterios de limpieza (para Ainhoa / `preparar_datos.py`)
+
+Rellenar con los números que salgan del script.
+
+| # | Regla | Registros afectados (enero) | % | Decisión | Aplica a |
+|---|---|---|---|---|---|
+| 1 | Pickup fuera de 2025 (o fuera del mes del archivo) | | | Excluir | Todas |
+| 2 | Dropoff ≤ pickup | | | Excluir | Q08 (duración) |
+| 3 | Duración > 3 h | | | Excluir | Q08 |
+| 4 | `trip_distance` ≤ 0 | | | Excluir | Q09 |
+| 5 | `trip_distance` > 100 millas | | | Excluir | Q09 |
+| 6 | `total_amount` < 0 | | | Excluir | Consultas de importe |
+| 7 | `fare_amount` ≤ 0 | | | Excluir | Consultas de importe |
+| 8 | `passenger_count` nulo o 0 | | | Mantener (no se usa en conteos) | — |
+| 9 | ID de zona sin correspondencia / 264–265 | | | Excluir en consultas por zona | Q04–Q07 |
+
+Idea clave: **no todas las reglas se aplican a todas las consultas**. Un viaje con distancia 0 sigue contando como viaje en Q01, pero no sirve para Q09.
+
+---
+
+## Etapa 2 · Meteorología NOAA
+
+1. Climate Data Online → *Search Tool* → **Daily Summaries**.
+2. Fechas: 2025-01-01 a 2025-12-31. Estación: **NY CITY CENTRAL PARK, NY US**.
+3. Formato CSV, **unidades métricas** (si no, vienen en pulgadas y °F).
+4. Variables: **PRCP** (precipitación), **TMAX**, **TMIN** (opcional: SNOW).
+5. El pedido llega por correo y puede tardar → **pedirlo cuanto antes**.
+
+Comprobaciones al recibirlo:
+- ¿Hay 365 filas? ¿Qué días faltan?
+- ¿Nulos en PRCP?
+- Formato de `DATE` compatible con `to_date(tpep_pickup_datetime)`.
+- Definir "día lluvioso": p. ej. PRCP ≥ 1 mm (documentar el umbral).
+
+> **Plan B:** si el lunes 9 la meteo no está validada, Q10 se sustituye por otra consulta solo con taxis y se documenta la incidencia.
+
+---
+
+## Mis consultas (borrador)
+
+### Q08 · Duración media por franja horaria
+- Duración = `(unix_timestamp(dropoff) - unix_timestamp(pickup)) / 60` minutos.
+- Solo viajes coherentes (reglas 1–3).
+- Agrupar por `hour(tpep_pickup_datetime)` (o franjas: madrugada, mañana, mediodía, tarde, noche).
+- Resultado: franja, nº viajes, duración media, mediana (`percentile_approx`).
+
+### Q09 · Importe medio por tramos de distancia
+- Tramos con `when`: 0–1, 1–3, 3–5, 5–10, 10–20, > 20 millas.
+- Reglas 4–7.
+- Resultado: tramo, nº viajes, importe medio, importe medio por milla.
+
+### Q10 · Volumen diario: días lluviosos frente a secos
+1. Agregar viajes por `to_date(tpep_pickup_datetime)` → una fila por día.
+2. Join con la tabla meteo por fecha.
+3. Agrupar por lluvioso/seco (y mejor también por día de la semana, porque el día de la semana influye mucho).
+- Resultado: tipo de día, nº de días, media de viajes diarios.
+- **Ojo:** asociación ≠ causalidad; una sola estación no representa toda la ciudad.
+
+---
+
+## Recordatorios
+
+- La nota de la defensa es **individual**: tengo que saber lanzar un `spark-submit`, moverme por HDFS (`hdfs dfs -ls`, `-put`, `-cat`) y explicar cualquier consulta, no solo las mías.
+- AWS Academy: **parar** las instancias, nunca terminarlas (se pierde HDFS).
+- Resultados en HDFS: `hdfs:///resultados/q08/`, `q09/`, `q10/`.
+
+## Pendiente del grupo (no depende de mí, pero afecta)
+
+- Confirmación del profesor: grupo de 4.
+- Fase 1 del enunciado: documento de dataset + 10 analíticas en ALUD el **25 nov, 08:00** (no aparece en el calendario).
+- Visualización: confirmar por escrito que se ha quitado (la plantilla de resultados aún la pide).
