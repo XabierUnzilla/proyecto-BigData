@@ -9,21 +9,21 @@ Pareja para pasar del local al clúster: **Ainhoa**.
 
 | Día | Etapa | Tarea | Hecho |
 |---|---|---|---|
-| Lun 3 | E1 | Descargar `yellow_tripdata_2025-01.parquet` y `taxi_zone_lookup.csv`; leer el diccionario oficial | ☐ |
-| Mar 4 | E1 | Abrir enero con Spark: esquema, 5 filas, recuento y nulos (`explorar_enero.py`) | ☐ |
-| Mié 5 | E1 | Comprobar que `LocationID` es único y que `PULocationID`/`DOLocationID` cruzan con el CSV | ☐ |
-| Jue 6 | E1 | Descargar los otros 11 Parquet y comparar esquemas (`comparar_esquemas()`) | ☐ |
-| Vie 7 | E2 | NOAA: elegir estación (Central Park), pedir datos de 2025 y revisar unidades | ☐ |
-| Vie 7 | — | Documentar criterios de limpieza (plantilla abajo) | ☐ |
-| Sáb 8 | Hito | Revisión en grupo: cerrar las 10 preguntas y los criterios de limpieza | ☐ |
-| Dom 9 | E2 | Tabla diaria de meteorología: fecha, precipitación, temperatura; 365 días y ausencias | ☐ |
-| Dom 9 | — | Decidir con el grupo: meteo válida para Q10 o plan B | ☐ |
-| Lun 10 | — | **Q09** · importe medio por tramos de distancia (local) | ☐ |
-| Mar 11 | — | **Q08** · duración media por franja horaria, solo viajes coherentes | ☐ |
-| Mié 12 | — | **Q10** · viajes diarios + meteorología: lluviosos frente a secos | ☐ |
-| Mié 12 | — | Sesión en pareja con Ainhoa (1 h) | ☐ |
-| Jue 13 | E6 | Lanzar Q08, Q09 y Q10 en el clúster con `spark-submit` (con Ainhoa) | ☐ |
-| Vie 14 | — | Revisión de código cruzada | ☐ |
+| Mar 3 | E1 | Descargar `yellow_tripdata_2025-01.parquet` y `taxi_zone_lookup.csv`; leer el diccionario oficial | ☐ |
+| Mié 4 | E1 | Abrir enero con Spark: esquema, 5 filas, recuento y nulos (`explorar_enero.py`) | ☐ |
+| Jue 5 | E1 | Comprobar que `LocationID` es único y que `PULocationID`/`DOLocationID` cruzan con el CSV | ☐ |
+| Vie 6 | E1 | Descargar los otros 11 Parquet y comparar esquemas (`comparar_esquemas()`) | ☐ |
+| Sáb 7 | E2 | NOAA: elegir estación (Central Park), pedir datos de 2025 y revisar unidades | ☐ |
+| Sáb 7 | — | Documentar criterios de limpieza (plantilla abajo) | ☐ |
+| Dom 8 | Hito | Revisión en grupo: cerrar las 10 preguntas y los criterios de limpieza | ☐ |
+| Lun 9 | E2 | Tabla diaria de meteorología: fecha, precipitación, temperatura; 365 días y ausencias | ☐ |
+| Lun 9 | — | Decidir con el grupo: meteo válida para Q10 o plan B | ☐ |
+| Mar 10 | — | **Q09** · importe medio por tramos de distancia (local) | ☐ |
+| Mié 11 | — | **Q08** · duración media por franja horaria, solo viajes coherentes | ☐ |
+| Jue 12 | — | **Q10** · viajes diarios + meteorología: lluviosos frente a secos | ☐ |
+| Jue 12 | — | Sesión en pareja con Ainhoa (1 h) | ☐ |
+| Vie 13 | E6 | Lanzar Q08, Q09 y Q10 en el clúster con `spark-submit` (con Ainhoa) | ☐ |
+| Sáb 14 | — | Revisión de código cruzada | ☐ |
 | Mar 17 | E7 | Revisar límites y anomalías (lluvia y viajes ≠ causalidad) | ☐ |
 | Mié 18 | E8 | Repasar el apartado de datos, limpieza y fuentes del documento | ☐ |
 | Jue 19 | — | Ensayo cruzado: explicar la consulta de otra persona y lanzar un trabajo desde cero | ☐ |
@@ -68,28 +68,36 @@ python scripts/explorar_enero.py
 
 - En la tabla de zonas, los **IDs 264 y 265** son "Unknown" / "Outside of NYC" → decidir si se excluyen en las consultas por zona o distrito.
 - El archivo de enero puede traer viajes con fechas de otros meses o años raros → filtrar por fecha de inicio.
-- Algún mes puede tener columnas con **distinto tipo** (p. ej. `passenger_count` entero vs. decimal) o nombres distintos (`Airport_fee` / `airport_fee`). Si pasa, leer los 12 Parquet de golpe falla → comparar uno a uno con `comparar_esquemas()` y documentarlo para Ainhoa.
+- Algún mes puede tener columnas con **distinto tipo** (p. ej. `passenger_count` entero vs. decimal) o nombres distintos (`Airport_fee` / `airport_fee`). Si pasa, leer los 12 Parquet de golpe falla → comparar uno a uno con `comparar_esquemas()` y documentarlo para Ainhoa. **Comprobado (5 nov):** los 12 meses de 2025 tienen las mismas 20 columnas y tipos, y se leen juntos sin error (48.722.602 viajes).
 - Comprobar que `LocationID` no tiene duplicados; si los tuviera, el join multiplicaría filas.
 
 ---
 
 ## Plantilla · Criterios de limpieza (para Ainhoa / `preparar_datos.py`)
 
-Rellenar con los números que salgan del script.
+Números de `scripts/calidad_enero.py`, sobre los 3.475.226 viajes de enero. Las reglas no son excluyentes: un viaje puede incumplir varias.
 
 | # | Regla | Registros afectados (enero) | % | Decisión | Aplica a |
 |---|---|---|---|---|---|
-| 1 | Pickup fuera de 2025 (o fuera del mes del archivo) | | | Excluir | Todas |
-| 2 | Dropoff ≤ pickup | | | Excluir | Q08 (duración) |
-| 3 | Duración > 3 h | | | Excluir | Q08 |
-| 4 | `trip_distance` ≤ 0 | | | Excluir | Q09 |
-| 5 | `trip_distance` > 100 millas | | | Excluir | Q09 |
-| 6 | `total_amount` < 0 | | | Excluir | Consultas de importe |
-| 7 | `fare_amount` ≤ 0 | | | Excluir | Consultas de importe |
-| 8 | `passenger_count` nulo o 0 | | | Mantener (no se usa en conteos) | — |
-| 9 | ID de zona sin correspondencia / 264–265 | | | Excluir en consultas por zona | Q04–Q07 |
+| 1 | Pickup fuera de 2025 (fuera del mes del archivo: 22) | 21 | 0,001 % | Excluir | Todas |
+| 2 | Dropoff ≤ pickup | 2.051 | 0,059 % | Excluir | Q08 (duración) |
+| 3 | Duración > 3 h | 1.377 | 0,040 % | Excluir | Q08 |
+| 4 | `trip_distance` ≤ 0 | 90.893 | 2,615 % | Excluir | Q09 |
+| 5 | `trip_distance` > 100 millas | 162 | 0,005 % | Excluir | Q09 |
+| 6 | `total_amount` < 0 | 63.037 | 1,814 % | Excluir | Consultas de importe |
+| 7 | `fare_amount` ≤ 0 | 145.516 | 4,187 % | Excluir | Consultas de importe |
+| 8 | `passenger_count` nulo / 0 | 540.149 / 24.656 | 15,543 % / 0,709 % | Mantener (no se usa en conteos) | — |
+| 9 | ID de zona sin correspondencia / 264–265 | Sin correspondencia: 0. Origen 264–265: 9.521. Origen o destino 264–265: 28.357 | 0 % / 0,274 % / 0,816 % | Excluir en consultas por zona | Q04–Q07 |
 
 Idea clave: **no todas las reglas se aplican a todas las consultas**. Un viaje con distancia 0 sigue contando como viaje en Q01, pero no sirve para Q09.
+
+### Para revisar en grupo (día 8)
+
+- **Falta un límite superior de importe:** el máximo de `total_amount` es 863.380,37. Con solo las reglas 6 y 7, ese viaje sigue dentro y puede distorsionar las medias de Q07 y Q09.
+- **Regla 1:** usar "fuera de 2025", no "fuera del mes". Un viaje del 1 de febrero en el archivo de enero sigue siendo válido al leer el año completo. En los 12 archivos, 29 viajes están fuera de 2025 y 214 fuera del mes de su archivo.
+- **Regla 7:** es la que más viajes excluye de las consultas de importe (4,187 %), y más del doble que la 6. Conviene mirar qué son antes de cerrarla.
+- **Regla 8:** los 540.149 nulos son exactamente los viajes con `payment_type = 0`, y en ellos también son nulos `RatecodeID`, `store_and_fwd_flag`, `congestion_surcharge` y `Airport_fee`. Excluirlos quitaría el 15,5 % de los viajes de enero y el 23,8 % del año (11.611.894 de 48.722.602; entre el 15,5 % de enero y el 28,1 % de junio). Falta confirmar en el diccionario qué significa ese código.
+- **Regla 9:** Q04, Q05 y Q07 solo usan el origen (9.521 viajes); Q06 usa origen y destino (28.357 viajes).
 
 ---
 
