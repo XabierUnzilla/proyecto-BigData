@@ -93,11 +93,36 @@ Idea clave: **no todas las reglas se aplican a todas las consultas**. Un viaje c
 
 ### Para revisar en grupo (día 8)
 
-- **Falta un límite superior de importe:** el máximo de `total_amount` es 863.380,37. Con solo las reglas 6 y 7, ese viaje sigue dentro y puede distorsionar las medias de Q07 y Q09.
+- **Falta un límite superior de importe:** el máximo de `total_amount` es 863.380,37. Con solo las reglas 6 y 7, ese viaje sigue dentro y puede distorsionar las medias de Q07 y Q09. En el año, el percentil 99,9 ronda los 178 y hay 1.210 viajes por encima de 500, 85 por encima de 1.000 y 6 por encima de 5.000. Propuesta: excluir `total_amount` > 500 en las consultas de importe.
 - **Regla 1:** usar "fuera de 2025", no "fuera del mes". Un viaje del 1 de febrero en el archivo de enero sigue siendo válido al leer el año completo. En los 12 archivos, 29 viajes están fuera de 2025 y 214 fuera del mes de su archivo.
-- **Regla 7:** es la que más viajes excluye de las consultas de importe (4,187 %), y más del doble que la 6. Conviene mirar qué son antes de cerrarla.
+- **Regla 7:** en el año excluye el 5,891 %, pero varía mucho por mes (9,5 % en noviembre, 1,2 % en diciembre). De sus 2.870.234 viajes, 1.879.872 tienen tarifa negativa y total positivo, y casi todos son `VendorID` 2 con `payment_type = 0`. Ese patrón pasa de 268.668 viajes en noviembre a 18 en diciembre, y aún no sabemos por qué. Con la regla 7 aplicada, la 6 añade como mucho 29 viajes.
+- **Regla 2:** en el año afecta al 1,121 % (546.304), frente al 0,059 % de enero. El 98 % son los 535.901 viajes de `VendorID` 7: todos sus viajes tienen dropoff ≤ pickup. Q08 se queda sin ese proveedor, y hay que documentarlo.
 - **Regla 8:** los 540.149 nulos son exactamente los viajes con `payment_type = 0`, y en ellos también son nulos `RatecodeID`, `store_and_fwd_flag`, `congestion_surcharge` y `Airport_fee`. Excluirlos quitaría el 15,5 % de los viajes de enero y el 23,8 % del año (11.611.894 de 48.722.602; entre el 15,5 % de enero y el 28,1 % de junio). Falta confirmar en el diccionario qué significa ese código.
-- **Regla 9:** Q04, Q05 y Q07 solo usan el origen (9.521 viajes); Q06 usa origen y destino (28.357 viajes).
+- **Regla 9:** Q04, Q05 y Q07 solo usan el origen (9.521 viajes en enero, 103.043 en el año); Q06 usa origen y destino (28.357 en enero, 371.657 en el año).
+
+### Año completo (`scripts/calidad_anual.py`, 48.722.602 viajes)
+
+| Regla | Viajes | % año | % mes mín–máx |
+|---|---|---|---|
+| 1. Pickup fuera de 2025 | 29 | 0,000 % | 0,000–0,001 % |
+| 2. Dropoff ≤ pickup | 546.304 | 1,121 % | 0,059–1,586 % |
+| 3. Duración > 3 h | 18.401 | 0,038 % | 0,031–0,050 % |
+| 4. `trip_distance` ≤ 0 | 1.402.958 | 2,879 % | 2,303–3,546 % |
+| 5. `trip_distance` > 100 millas | 2.870 | 0,006 % | 0,005–0,008 % |
+| 6. `total_amount` < 0 | 973.721 | 1,998 % | 1,135–3,035 % |
+| 7. `fare_amount` ≤ 0 | 2.870.234 | 5,891 % | 1,178–9,508 % |
+| 8. `passenger_count` nulo | 11.611.894 | 23,833 % | 15,543–28,058 % |
+| 8. `passenger_count` = 0 | 260.062 | 0,534 % | 0,437–0,709 % |
+| 9. Origen 264–265 | 103.043 | 0,211 % | 0,177–0,274 % |
+| 9. Origen o destino 264–265 | 371.657 | 0,763 % | 0,685–0,898 % |
+
+Viajes que quedan por grupo de consultas, con las reglas actuales:
+
+| Grupo | Reglas | Excluidos | Quedan |
+|---|---|---|---|
+| Duración (Q08) | 1, 2, 3 | 564.734 (1,159 %) | 48.157.868 |
+| Importes | 1, 6, 7 | 2.870.263 (5,891 %) | 45.852.339 |
+| Distancia (Q09) | 1, 4, 5, 6, 7 | 4.022.547 (8,256 %) | 44.700.055 |
 
 ---
 
